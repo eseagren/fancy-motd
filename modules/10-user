@@ -4,7 +4,13 @@ set -euo pipefail
 # shellcheck source=./framework.sh
 source "${BASE_DIR}/framework.sh"
 
-user=${USER:-$(id -un)}
+# Grab the username of the user who ssh'd in when this is run under motd.d
+# Original code would only return root b/c privileges had not yet dropped
+# to the user level. A little hacky, but it works.
+# https://superuser.com/questions/981897/trying-to-print-username-at-message-of-the-day-motd
+PPID1=`cat /proc/$PPID/status | grep PPid | awk '{ print $2 }'`
+PPID2=`cat /proc/$PPID1/status | grep PPid | awk '{ print $2 }'`
+user=`ps -x | grep $PPID2 | awk '{ print $6 }' |  sed "s/[[:digit:].-]//g"`
 hostname=${HOSTNAME:-$(hostname)}
 
-print_columns "Logged as" "${user}@${hostname}"
+print_columns "Logged in as" "${user}@${hostname}"
